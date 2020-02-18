@@ -1,2 +1,2 @@
-# practica-de-canto
-Aplicación para aprender a cantar bien.
+# bot-moderador-para-telegram
+Bot moderador de grupos para la aplicación de mensajería Telegram.
