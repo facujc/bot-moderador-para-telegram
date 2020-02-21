@@ -9,6 +9,8 @@ import os
 import time
 import asyncio
 import logging
+import psycopg2
+
 
 from math import log, log2
 from aiogram import Bot, types
@@ -18,6 +20,7 @@ from aiogram.utils.executor import start_webhook
 
 API_TOKEN = os.environ['API_TOKEN']
 BOT_USERNAME = os.environ['BOT_USERNAME']
+DATABASE_URL = os.environ['DATABASE_URL']
 
 # webhook settings
 WEBHOOK_HOST = os.environ['WEBHOOK_HOST']
@@ -1023,7 +1026,7 @@ class CommandHandler:
         non_penalizable_limit, severity_factor, patience_factor, calming_factor = self.user.karma_parameters
         
         for user in users:
-            _, fault_score, patience_exponent, last_update = user.karma
+            last_fault, fault_score, patience_exponent, last_update = user.karma
             
             updateFaultScore()
             
@@ -1042,13 +1045,23 @@ class CommandHandler:
             else:
                     self.notifyHandler(user, "warn", warn_reason)
             
-            user.karma = [fault, fault_score, patience_exponent, last_update]
+            last_fault = fault
+            
+            user.karma = [last_fault, fault_score, patience_exponent, last_update]
     
     async def cmd_wrm(self, users, parameters):
             await bot.delete_message(self.chat_id, self.message.reply_to_message.message_id)
             await self.cmd_warn(users, parameters)
     
     async def cmd_unwarn(self, users, parameters):
+        def updateFaultScore():            
+            time_lapsed = time.time() - last_update
+            score_lapsed = (0 if time_lapsed <0 else time_lapsed) / calming_factor
+            fault_score = fault_score - score_lapsed
+            fault_score = 0 if fault_score < 0 else fault_score
+            
+            last_update = time.time()
+
         try:
             fault = parameters.split(" ", 1)[0]
             fault = int(fault)
@@ -1098,10 +1111,61 @@ class NotifyHandler:
 
 class DataBase:
     def __init__(self):
-        pass
+        connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+        
+        def connect():
+    connection = None
+    try:
+        print('Connecting to the PostgreSQL database...')
+        connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+      
+        cursor = connection.cursor()
+        
+        print('PostgreSQL database version:')
+        cursor.execute('SELECT version()')
+ 
+        db_version = cursor.fetchone()
+        print(db_version)
+       
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if connection is not None:
+            connection.close()
+            print('Database connection closed.')
     
-    def 
-
+    
+    commands = (
+        """
+        CREATE TABLE vendors (
+            vendor_id SERIAL PRIMARY KEY,
+            vendor_name VARCHAR(255) NOT NULL
+        )
+        """,
+        """ CREATE TABLE parts (
+                part_id SERIAL PRIMARY KEY,
+                part_name VARCHAR(255) NOT NULL
+                )
+        """,
+        """
+        CREATE TABLE part_drawings (
+                part_id INTEGER PRIMARY KEY,
+                file_extension VARCHAR(5) NOT NULL,
+                drawing_data BYTEA NOT NULL,
+                FOREIGN KEY (part_id)
+                REFERENCES parts (part_id)
+                ON UPDATE CASCADE ON DELETE CASCADE
+        )
+        """)
+    
+    for command in commands:
+            cursor.execute(command)
+    
+    
+    
+    
+    
 class LevelHandler:
     def __init__(self):
         pass
@@ -1113,6 +1177,7 @@ class LevelHandler:
 class User:
     def __init__(
             self, 
+            chat,
             chat_id,
             user_id, 
             level=0,
@@ -1120,11 +1185,12 @@ class User:
             ):
         
         self.level = 0
-        self.karma_parameters = [0, 1, 1, .5] #[non_penalizable_limit(penalty_score), severity_factor(time/penalty_score), calming_factor(penalty_score/time), patience_factor(patience_score/penalty_score)]        
         
+        self.chat = chat
         self.user_id = user_id
+        self.chat_id = chat. chat_id
         self.karma = karma
-        self.chat_id = chat_id
+        self.karma_parameters = chat.karma_parameters        
         self.username = getattr(bot.get_chat_member(chat_id, user_id).user, 'username', None)
         
         #tools
@@ -1144,17 +1210,149 @@ class User:
         self.commandHandler.manage(message)
 
 
+class Chat:
+    def __init__(
+            self, 
+            chat_id, 
+            active_users={},
+            inactive_users={}, 
+            commands_prefix="/",
+            karma_parameters=[1, 0, 1, 0]
+            ):
+        
+        self.chat_id = chat_id
+        self.commands_prefix = commands_prefix
+
+        self.active_users = {}
+        if active_users:
+            for user_id, user_dict in active_users.items():
+                self.active_users[user_id] = User(self, **user_dict)
+                
+        self.inactive_users = {}
+        if inactive_users:
+            for user_id, user_dict in inactive_users.items():
+                self.inactive_users[user_id] = User(self, **user_dict)
+                
+    def dict(self):
+        dictionary = {
+            "chat_id": self.chat_id, 
+            "Pin": self.Pin, 
+            "lastCount": self.lastCount, 
+            "lastTime": self.lastTime, 
+            "antiFloodParameters": self.antiFloodParameters,
+            "commands_prefix": self.commands_prefix
+            }
+        
+        active_users = {}
+        for user_id, user in self.active_users.items():
+            active_users[str(user_id)] = user.dict()
+        
+        inactive_users = {}
+        for user_id, user in self.inactive_users.items():
+            inactive_users[str(user_id)] = user.dict()
+        
+        dictionary.update({'active_users':active_users, 'inactive_users': inactive_users})
+        return dictionary
+        
+    def newUsersHandler(self, message: types.Message):
+        for user_obj in message.new_chat_members:
+            self.new_users_rate += 1
+            
+            if user_obj.is_bot:
+                self.active_users['bot_users'].bot_ids.append(user_obj.id)
+                if self.restrict_all_new_bots:
+                    bot.restrict_chat_member(self.chatId, user_obj.id, can_send_messages=0)
+            
+            elif user_obj.id in self.inactive_users:
+                self.inactive_users[str(user_obj.id)] = self.inactive_users.pop(str(user_obj.id))
+
+            else:
+                user = self.active_users.setdefault(str(user_obj.id), User(self, user_obj.id))            
+            
+            if 10 >= self.new_users_rate > 5:
+                user.setLevel(-1)
+                bot.send_message(message.chat.id,"El usuario ha sido restringido (multimedia) por seguridad.")
+            
+            if self.new_users_rate > 10:
+                user.setLevel(-2)
+                bot.send_message(message.chat.id,"El usuario ha sido restringido completamente por seguridad.")
+
+    def userLeftHandler(self, message: types.Message):
+        user = self.active_users.pop(str(message.left_chat_member.id))
+        self.inactive_users[str(message.left_chat_member.id)] = user
+        user.messages.clear()
+
+    async def activityHandler(self, message):
+        grace_period = 3
+        min_messages = 12
+        check_frecuence = 24
+        
+        activity, last_check = user.activity
+        
+        if time.time() > last_check+check_frecuence*60**2:
+            for user in activeusers:
+                if activity < 0:
+                    activity = activity - (time.time()-last_check)/60**2*(min_messages_rate/check_frecuence)
+                    user.activity[0] = activity, time.time()
+                
+                    if user.activity[0] < -grace_period*(24/check_frecuence*min_messages_rate):
+                        user.setLevel(-3)
+                else:
+                    activity = activity - (time.time()-last_check)/60**2*(min_messages_rate/check_frecuence)
+                    user.activity[0] = activity, time.time()
+                    
+                    if user.activity[0] < 0:
+                        await bot.send_message(self.chatId,"El usuario va a ser kickeado en 3 dias por inactividad.")
+    
+    async def userRateHandler(self, message):
+        min_users = 5
+        max_users = 1
+        min_check_frecuence = 1
+        
+        rate, last_check = self.new_users_rate
+        
+        if time.time() > last_check+check_frecuence*60**2:
+        
+    def messageHandler(self, message):
+        user_id = message.from_user.id
+        user = self.active_users.setdefault(str(user_id), self.User(chat, user_id, message.from_user.is_bot))
+        user.messageHandler(message)
+        
+        if self.raidHandler:
+            self.raidHandler.manageMessages(message)
+        else:
+            self.checkMsgsToDelete()
+            self.newUsersHandler()
+            self.userLeftHandler()
+
 
 async def on_startup(dp):
     await bot.set_webhook(WEBHOOK_URL)
 
 
-
-
-
-
 @dp.message_handler()
 async def messageHandler(message: types.Message):
+    
+connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+cursor = connection.cursor()
+
+create_function = """
+    CREATE OR REPLACE FUNCTION ejemplo() RETURNS integer AS $$
+        BEGIN
+            RETURN 104;
+        END;
+    $$ LANGUAGE plpgsql;
+    """
+cursor.execute(create_function)
+cursor.execute("SELECT ejemplo()")
+cursor.fetchone()
+print(cursor)
+
+cursor.close()
+conection.close()
+
+    
+"""
     chat_id = message.chat.id
     if chat_id == 1234134:
         user_id = message.from_user.id        
@@ -1163,6 +1361,8 @@ async def messageHandler(message: types.Message):
         user.messageHandler(message)
         
         await bot.send_message(chat_id, chat_id)
+        
+"""
 
 
 
