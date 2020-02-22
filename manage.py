@@ -1306,8 +1306,8 @@ async def messageHandler(message: types.Message):
         """
     cursor.execute(create_function)
     cursor.execute("SELECT ejemplo()")
-    cursor.fetchone()
-    print(cursor)
+    result = cursor.fetchone()
+    print(result)
     
     cursor.close()
     connection.close()
