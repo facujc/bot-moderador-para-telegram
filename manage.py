@@ -1113,26 +1113,26 @@ class DataBase:
     def __init__(self):
         connection = psycopg2.connect(DATABASE_URL, sslmode='require')
         
-        def connect():
-    connection = None
-    try:
-        print('Connecting to the PostgreSQL database...')
-        connection = psycopg2.connect(DATABASE_URL, sslmode='require')
-      
-        cursor = connection.cursor()
-        
-        print('PostgreSQL database version:')
-        cursor.execute('SELECT version()')
- 
-        db_version = cursor.fetchone()
-        print(db_version)
-       
-        cursor.close()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-    finally:
-        if connection is not None:
-            connection.close()
+    def connect(self):
+        connection = None
+        try:
+            print('Connecting to the PostgreSQL database...')
+            connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+          
+            cursor = connection.cursor()
+            
+            print('PostgreSQL database version:')
+            cursor.execute('SELECT version()')
+     
+            db_version = cursor.fetchone()
+            print(db_version)
+           
+            cursor.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+        finally:
+            if connection is not None:
+                connection.close()
             print('Database connection closed.')
     
     
@@ -1157,14 +1157,7 @@ class DataBase:
                 REFERENCES parts (part_id)
                 ON UPDATE CASCADE ON DELETE CASCADE
         )
-        """)
-    
-    for command in commands:
-            cursor.execute(command)
-    
-    
-    
-    
+        """)    
     
 class LevelHandler:
     def __init__(self):
@@ -1281,41 +1274,10 @@ class Chat:
         user = self.active_users.pop(str(message.left_chat_member.id))
         self.inactive_users[str(message.left_chat_member.id)] = user
         user.messages.clear()
-
-    async def activityHandler(self, message):
-        grace_period = 3
-        min_messages = 12
-        check_frecuence = 24
-        
-        activity, last_check = user.activity
-        
-        if time.time() > last_check+check_frecuence*60**2:
-            for user in activeusers:
-                if activity < 0:
-                    activity = activity - (time.time()-last_check)/60**2*(min_messages_rate/check_frecuence)
-                    user.activity[0] = activity, time.time()
-                
-                    if user.activity[0] < -grace_period*(24/check_frecuence*min_messages_rate):
-                        user.setLevel(-3)
-                else:
-                    activity = activity - (time.time()-last_check)/60**2*(min_messages_rate/check_frecuence)
-                    user.activity[0] = activity, time.time()
-                    
-                    if user.activity[0] < 0:
-                        await bot.send_message(self.chatId,"El usuario va a ser kickeado en 3 dias por inactividad.")
-    
-    async def userRateHandler(self, message):
-        min_users = 5
-        max_users = 1
-        min_check_frecuence = 1
-        
-        rate, last_check = self.new_users_rate
-        
-        if time.time() > last_check+check_frecuence*60**2:
         
     def messageHandler(self, message):
         user_id = message.from_user.id
-        user = self.active_users.setdefault(str(user_id), self.User(chat, user_id, message.from_user.is_bot))
+        user = self.active_users.setdefault(str(user_id), self.User(self.chat, user_id, message.from_user.is_bot))
         user.messageHandler(message)
         
         if self.raidHandler:
