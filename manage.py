@@ -1294,24 +1294,23 @@ async def on_startup(dp):
 
 @dp.message_handler()
 async def messageHandler(message: types.Message):
+    connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+    cursor = connection.cursor()
     
-connection = psycopg2.connect(DATABASE_URL, sslmode='require')
-cursor = connection.cursor()
-
-create_function = """
-    CREATE OR REPLACE FUNCTION ejemplo() RETURNS integer AS $$
-        BEGIN
-            RETURN 104;
-        END;
-    $$ LANGUAGE plpgsql;
-    """
-cursor.execute(create_function)
-cursor.execute("SELECT ejemplo()")
-cursor.fetchone()
-print(cursor)
-
-cursor.close()
-conection.close()
+    create_function = """
+        CREATE OR REPLACE FUNCTION ejemplo() RETURNS integer AS $$
+            BEGIN
+                RETURN 104;
+            END;
+        $$ LANGUAGE plpgsql;
+        """
+    cursor.execute(create_function)
+    cursor.execute("SELECT ejemplo()")
+    cursor.fetchone()
+    print(cursor)
+    
+    cursor.close()
+    connection.close()
 
     
 """
