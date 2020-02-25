@@ -1318,7 +1318,7 @@ class DataBaseSession:
                     groups_name CHAR;
                 BEGIN
                     groups_name := 'groups'
-                    SELECT to_regclass('schema_name.groups_name') AS table_A;
+                    SELECT to_regclass('public.groups_name') AS table_A;
                     SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
                     IF table_A IS NULL THEN
                         CREATE TABLE groups_name
@@ -1338,7 +1338,7 @@ class DataBaseSession:
                     
                     FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
                     LOOP 
-                        SELECT to_regclass('schema_name.group_id') AS table_A;
+                        SELECT to_regclass('public.group_id') AS table_A;
                         SELECT * FROM json_populate_recordset(null::myrowtype, users_json) AS table_B;
                         IF table_A IS NULL THEN
                             CREATE TABLE group_id
