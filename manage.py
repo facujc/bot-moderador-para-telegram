@@ -1341,7 +1341,7 @@ class DataBaseSession:
                     LOOP
                         SELECT to_regclass('public.' || rec.chat_id) AS table_A;
                         IF table_A IS NULL THEN
-                            CREATE TABLE (SELECT rec.chat_id)(user_id INT, level INT, karma TEXT [])
+                            CREATE TABLE (SELECT rec.chat_id)
                             AS json_populate_recordset(null::myrowtype, rec.user_json);
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
