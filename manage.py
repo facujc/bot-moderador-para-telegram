@@ -1316,19 +1316,18 @@ class DataBaseSession:
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 BEGIN
                     SELECT to_regclass('public.groups') AS table_A;
-                    SELECT * AS table_B FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list));
                     IF table_A IS NULL THEN
-                        CREATE TABLE groups AS table_B;
+                        CREATE TABLE groups(chat_id INT, commands_prefix CHAR(1), karma_parameters TEXT []);
                     ELSE
                         INSERT INTO table_A (chat_id, commands_prefix, karma_parameters)
-                            SELECT chat_id, commands_prefix, karma_parameters FROM table_B;
+                            SELECT chat_id, commands_prefix, karma_parameters FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list));
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE table_A
                             SET
                                 commands_prefix = table_B.commands_prefix,
                                 karma_parameters = table_B.karma_parameters
-                            FROM table_B
+                            FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list)) AS table_B
                             WHERE table_B.chat_id = table_A.chat_id;
                     END IF;
                     
