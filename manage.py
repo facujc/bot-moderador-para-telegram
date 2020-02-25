@@ -1314,14 +1314,11 @@ class DataBaseSession:
     def __init__(self):
         self.update_tables_function = """
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
-                DECLARE
-                    groups_name CHAR;
                 BEGIN
-                    groups_name := 'groups';
-                    SELECT to_regclass('public.groups_name') AS table_A;
+                    SELECT to_regclass('public.groups') AS table_A;
                     SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
                     IF table_A IS NULL THEN
-                        CREATE TABLE groups_name
+                        CREATE TABLE groups
                         AS table_B;
                     ELSE
                         INSERT INTO table_A (chat_id, commands_prefix, karma_parameters)
