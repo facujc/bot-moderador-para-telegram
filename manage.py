@@ -1424,57 +1424,54 @@ async def on_startup(dp):
 async def messageHandler(message: types.Message):
     chat_id = message.chat.id
     print("Id de chat: {}".format(chat_id))
-
+    if chat_id == 927039296:
+        users_num = 20
+        chats_num = 10
+            
+        chats = {}
+        
+        for _ in range(chats_num):
+            users = {}
+            chat_id = random.randrange(100000, 999999)
+            commands_prefix = random.choice(["/", "!", ".", "-"])
+            karma_parameters = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
+            chat = Chat(chat_id, users, commands_prefix, karma_parameters)
+            
+            for _ in range(users_num):
+                user_id = random.randrange(10000, 99999)
+                level = random.randrange(-2, 7)
+                karma = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
+                user = User(chat, chat_id, user_id, level, karma)
+        
+            
+            chats[chat_id] = chat
+        
+        
+        
+        chats_list = []
+        chats_tables_list = {}
+        
+        for chat_id, chat in chats.items():
+            chat_data, chat_users = chat.dict()
+            chats_list.append(chat_data)
+            chats_tables_list[chat_id] = chat_users
+        
+        
+        session = DataBaseSession()
+        session.updateFunctions()
+        session.updateTables(chats_list, chats_tables_list)
+        
     """
-
-    users_num = 20
-    chats_num = 10
-        
-    chats = {}
-    
-    for _ in range(chats_num):
-        users = {}
-        chat_id = random.randrange(100000, 999999)
-        commands_prefix = random.choice(["/", "!", ".", "-"])
-        karma_parameters = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
-        chat = Chat(chat_id, users, commands_prefix, karma_parameters)
-        
-        for _ in range(users_num):
-            user_id = random.randrange(10000, 99999)
-            level = random.randrange(-2, 7)
-            karma = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
-            user = User(chat, chat_id, user_id, level, karma)
-    
-        
-        chats[chat_id] = chat
-    
-    
-    
-    chats_list = []
-    chats_tables_list = {}
-    
-    for chat_id, chat in chats.items():
-        chat_data, chat_users = chat.dict()
-        chats_list.append(chat_data)
-        chats_tables_list[chat_id] = chat_users
-    
-    
-    session = DataBaseSession()
-    session.updateFunctions()
-    session.updateTables(chats_list, chats_tables_list)
+        chat_id = message.chat.id
+        if chat_id == 1234134:
+            user_id = message.from_user.id        
+            user = active_users.setdefault(user_id, inactive_users.pop(user_id, User(chat_id, user_id)))
+            user.state = True
+            user.messageHandler(message)
+            
+            await bot.send_message(chat_id, chat_id)
+            
     """
-    
-"""
-    chat_id = message.chat.id
-    if chat_id == 1234134:
-        user_id = message.from_user.id        
-        user = active_users.setdefault(user_id, inactive_users.pop(user_id, User(chat_id, user_id)))
-        user.state = True
-        user.messageHandler(message)
-        
-        await bot.send_message(chat_id, chat_id)
-        
-"""
 
 
 
