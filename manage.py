@@ -1324,7 +1324,7 @@ class DataBaseSession:
                     SELECT to_regclass('public.groups') AS table_A;
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
-                        AS SELECT * (FROM json_populate_recordset(null::myrowtype, chats_list));
+                        AS (SELECT * FROM json_populate_recordset(null::myrowtype, chats_list));
                     ELSE
                         INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
                             SELECT chat_id, commands_prefix, karma_parameters 
