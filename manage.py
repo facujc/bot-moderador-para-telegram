@@ -1326,7 +1326,7 @@ class DataBaseSession:
                             SET
                                 commands_prefix = table_B.commands_prefix,
                                 karma_parameters = table_B.karma_parameters
-                            FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list)) AS table_B
+                            FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B
                             WHERE table_B.chat_id = table_A.chat_id;
                     END IF;
                     
