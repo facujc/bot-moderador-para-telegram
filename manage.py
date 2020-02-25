@@ -1328,7 +1328,7 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
+                    FOR group_id, users_json IN (SELECT group_id, users_json FROM json_each_text(groups_table_list))
                     LOOP 
                         SELECT to_regclass('public.group_id') AS table_A;
                         SELECT * AS table_B FROM json_populate_recordset(null::myrowtype, users_json);
