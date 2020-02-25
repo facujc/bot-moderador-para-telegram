@@ -1319,14 +1319,13 @@ class DataBaseSession:
                     IF table_A IS NULL THEN
                         CREATE TABLE groups(chat_id INT, commands_prefix CHAR(1), karma_parameters TEXT []);
                     ELSE
-                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters) (SELECT chat_id, commands_prefix, karma_parameters FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list)) AS group_list_)
+                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters) (SELECT chat_id, commands_prefix, karma_parameters FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B)
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
                             SET
                                 commands_prefix = table_B.commands_prefix,
                                 karma_parameters = table_B.karma_parameters
-                            FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B
                     END IF;
                     
                     FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
