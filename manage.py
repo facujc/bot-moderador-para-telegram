@@ -1355,8 +1355,8 @@ class DataBaseSession:
                                 WHERE table_B.user_id = table_A.user_id;
                         END IF;
                     END LOOP;
-                END;
-            $$
+                END; $$
+            LANGUAGE PLPGSQL;
         """
         
         self.get_tables_function = """
@@ -1374,8 +1374,8 @@ class DataBaseSession:
                     
                     SELECT json_agg(groups) FROM groups AS chats_list
                     SELECT json_agg(temp_chats_list) FROM temp_groups AS chats_tables_list
-                END;
-            $$
+                END; $$
+            LANGUAGE plpgsql;
         """
     
     def updateFunctions(self):
