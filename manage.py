@@ -1458,17 +1458,8 @@ async def messageHandler(message: types.Message):
         
         session = DataBaseSession()
         
-        try:
-            result1 = session.updateFunctions()
-            print("Update Functions Result: {}".format(result1))
-            try:
-                result2 = session.updateTables(chats_list, chats_tables_list)
-                print("Update Tables Result: {}".format(result2))
-            except Exception as _exception:
-                print(_exception)
-        except Exception as _exception:
-            print(_exception)
-
+        session.updateFunctions()
+        session.updateTables(chats_list, chats_tables_list)
         
     """
         chat_id = message.chat.id
