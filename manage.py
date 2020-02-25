@@ -7,6 +7,7 @@ Created on 2 sep. 2019
 
 import os
 import time
+import random
 import asyncio
 import logging
 import psycopg2
@@ -1108,56 +1109,6 @@ class NotifyHandler:
     
     def func(self):
         pass
-
-class DataBase:
-    def __init__(self):
-        connection = psycopg2.connect(DATABASE_URL, sslmode='require')
-        
-    def connect(self):
-        connection = None
-        try:
-            print('Connecting to the PostgreSQL database...')
-            connection = psycopg2.connect(DATABASE_URL, sslmode='require')
-          
-            cursor = connection.cursor()
-            
-            print('PostgreSQL database version:')
-            cursor.execute('SELECT version()')
-     
-            db_version = cursor.fetchone()
-            print(db_version)
-           
-            cursor.close()
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-        finally:
-            if connection is not None:
-                connection.close()
-            print('Database connection closed.')
-    
-    
-    commands = (
-        """
-        CREATE TABLE vendors (
-            vendor_id SERIAL PRIMARY KEY,
-            vendor_name VARCHAR(255) NOT NULL
-        )
-        """,
-        """ CREATE TABLE parts (
-                part_id SERIAL PRIMARY KEY,
-                part_name VARCHAR(255) NOT NULL
-                )
-        """,
-        """
-        CREATE TABLE part_drawings (
-                part_id INTEGER PRIMARY KEY,
-                file_extension VARCHAR(5) NOT NULL,
-                drawing_data BYTEA NOT NULL,
-                FOREIGN KEY (part_id)
-                REFERENCES parts (part_id)
-                ON UPDATE CASCADE ON DELETE CASCADE
-        )
-        """)    
     
 class LevelHandler:
     def __init__(self):
@@ -1166,6 +1117,8 @@ class LevelHandler:
     def func(self):
         pass
 
+
+"""
 
 class User:
     def __init__(
@@ -1287,6 +1240,181 @@ class Chat:
             self.newUsersHandler()
             self.userLeftHandler()
 
+"""
+
+
+
+
+
+class User:
+    def __init__(
+            self, 
+            chat,
+            chat_id,
+            user_id, 
+            level=0,
+            karma=[1, 0, 1, 0] #[last_fault, fault_score, patience_exponent, last_update]
+            ):
+        
+        self.level = 0
+        
+        self.chat = chat
+        self.user_id = user_id
+        self.chat_id = chat_id
+        self.level = level
+        self.karma = karma
+        self.karma_parameters = chat.karma_parameters  
+        
+        self.username = "".join([random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(10)])
+
+    def dict(self):
+        dictionary = {
+            "user_id": self.user_id, 
+            "level": self.level,
+            "karma": self.karma
+            }
+        
+        return dictionary
+    
+class Chat:
+    def __init__(
+            self, 
+            chat_id, 
+            users={},
+            commands_prefix="/",
+            karma_parameters=[1, 0, 1, 0]
+            ):
+        
+        self.chat_id = chat_id
+        
+        self.commands_prefix = commands_prefix
+        self.karma_parameters = karma_parameters
+        
+        self.users = {}
+        if users:
+            for user_id, user_dict in users.items():
+                self.users[user_id] = User(self, **user_dict)
+                                
+    def dict(self):
+        chat_data = {
+            "chat_id": self.chat_id, 
+            "commands_prefix": self.commands_prefix,
+            "karma_parameters": self.karma_parameters,
+            }
+        
+        chat_users = []
+        for _, user in self.users.items():
+            user_dict = user.dict()
+            user_dict["is_active"] = True
+            chat_users.append(user_dict)
+        
+        return chat_data, chat_users
+
+class DataBaseSession:
+    def __init__(self):
+        self.update_tables_function = """
+            CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
+                DECLARE
+                    groups_name := 'groups'
+                BEGIN
+                    SELECT to_regclass('schema_name.groups_name') AS table_A;
+                    SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
+                    IF table_A IS NULL THEN
+                        CREATE TABLE groups_name
+                        AS table_B;
+                    ELSE
+                        INSERT INTO table_A (chat_id, commands_prefix, karma_parameters)
+                            SELECT chat_id, commands_prefix, karma_parameters FROM table_B;
+                        ON CONFLICT (chat_id) 
+                        DO
+                            UPDATE table_A
+                            SET
+                                commands_prefix = table_B.commands_prefix,
+                                karma_parameters = table_B.karma_parameters
+                            FROM table_B
+                            WHERE table_B.chat_id = table_A.chat_id;
+                    END IF;
+                    
+                    FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
+                    LOOP 
+                        SELECT to_regclass('schema_name.group_id') AS table_A;
+                        SELECT * FROM json_populate_recordset(null::myrowtype, users_json) AS table_B;
+                        IF table_A IS NULL THEN
+                            CREATE TABLE group_id
+                            AS table_B;
+                        ELSE
+                            INSERT INTO table_A (user_id, level, karma)
+                                SELECT user_id, level, karma FROM table_B;
+                            ON CONFLICT (user_id) 
+                            DO
+                                UPDATE table_A
+                                SET
+                                    level = table_B.level,
+                                    karma = table_B.karma
+                                FROM table_B
+                                WHERE table_B.user_id = table_A.user_id;
+                        END IF;
+                    END LOOP;
+                END;
+            $$
+        """
+        
+        self.get_tables_function = """
+            CREATE OR REPLACE FUNCTION get_tables(OUT chats_list JSON, OUT chats_tables_list JSON) AS $$
+                DECLARE
+                    groups_name := 'groups'
+                BEGIN
+                    CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json json);
+                    FOR chat_id, is_active IN (SELECT chat_id, is_active FROM groups WHERE is_active IS TRUE)
+                    LOOP
+                        SELECT json_agg(chat_id) FROM chat_id AS chat_json
+                        INSERT INTO temp_chats_list(chat_id, chat_json)
+                            VALUES (chat_id, chat_json);
+                    END LOOP;
+                    
+                    SELECT json_agg(groups) FROM groups AS chats_list
+                    SELECT json_agg(temp_chats_list) FROM temp_groups AS chats_tables_list
+                END;
+            $$
+        """
+    
+    def updateFunctions(self):
+        self.execute(self.update_tables_function)
+        self.execute(self.get_tables_function)
+            
+    def execute(self, sql):
+        connection = None
+        try:
+            print('Connecting to the PostgreSQL database...')
+            connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+            cursor = connection.cursor()
+            
+            cursor.execute(sql)
+            
+            result = cursor.fetchall()
+            print("Result: {}".format(result))
+           
+            cursor.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+        finally:
+            if connection is not None:
+                connection.close()
+                print('Database connection closed.')
+            
+            return result
+        
+    def updateTables(self, chats_list, chats_tables_list):
+        result = self.execute("SELECT update_tables({}, {})".format(chats_list, chats_tables_list))
+        return result        
+        
+    def getTables(self):
+        result = self.execute("SELECT get_tables()")
+        return result
+
+
+
+
 
 async def on_startup(dp):
     await bot.set_webhook(WEBHOOK_URL)
@@ -1294,24 +1422,47 @@ async def on_startup(dp):
 
 @dp.message_handler()
 async def messageHandler(message: types.Message):
-    connection = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cursor = connection.cursor()
-    
-    create_function = """
-        CREATE OR REPLACE FUNCTION ejemplo() RETURNS integer AS $$
-            BEGIN
-                RETURN 104;
-            END;
-        $$ LANGUAGE plpgsql;
-        """
-    cursor.execute(create_function)
-    cursor.execute("SELECT ejemplo()")
-    result = cursor.fetchone()
-    print(result)
-    
-    cursor.close()
-    connection.close()
+    chat_id = message.chat.id
+    print("Id de chat: {}".format(chat_id))
 
+    """
+
+    users_num = 20
+    chats_num = 10
+        
+    chats = {}
+    
+    for _ in range(chats_num):
+        users = {}
+        chat_id = random.randrange(100000, 999999)
+        commands_prefix = random.choice(["/", "!", ".", "-"])
+        karma_parameters = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
+        chat = Chat(chat_id, users, commands_prefix, karma_parameters)
+        
+        for _ in range(users_num):
+            user_id = random.randrange(10000, 99999)
+            level = random.randrange(-2, 7)
+            karma = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
+            user = User(chat, chat_id, user_id, level, karma)
+    
+        
+        chats[chat_id] = chat
+    
+    
+    
+    chats_list = []
+    chats_tables_list = {}
+    
+    for chat_id, chat in chats.items():
+        chat_data, chat_users = chat.dict()
+        chats_list.append(chat_data)
+        chats_tables_list[chat_id] = chat_users
+    
+    
+    session = DataBaseSession()
+    session.updateFunctions()
+    session.updateTables(chats_list, chats_tables_list)
+    """
     
 """
     chat_id = message.chat.id
