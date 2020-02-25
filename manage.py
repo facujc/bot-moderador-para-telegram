@@ -1319,7 +1319,8 @@ class DataBaseSession:
                     IF table_A IS NULL THEN
                         CREATE TABLE groups(chat_id INT, commands_prefix CHAR(1), karma_parameters TEXT []);
                     ELSE
-                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters) (SELECT chat_id, commands_prefix, karma_parameters FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B)
+                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
+                            SELECT chat_id, commands_prefix, karma_parameters FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
@@ -1328,7 +1329,7 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR group_id, users_json IN (SELECT group_id, users_json FROM json_each_text(groups_table_list))
+                    FOR group_id, users_json IN SELECT group_id, users_json FROM json_each_text(groups_table_list)
                     LOOP 
                         SELECT to_regclass('public.group_id') AS table_A;
                         SELECT * AS table_B FROM json_populate_recordset(null::myrowtype, users_json);
