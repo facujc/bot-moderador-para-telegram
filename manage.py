@@ -1317,7 +1317,7 @@ class DataBaseSession:
                 DECLARE
                     groups_name CHAR;
                 BEGIN
-                    groups_name := 'groups'
+                    groups_name := 'groups';
                     SELECT to_regclass('public.groups_name') AS table_A;
                     SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
                     IF table_A IS NULL THEN
@@ -1366,7 +1366,7 @@ class DataBaseSession:
                 DECLARE
                     groups_name CHAR;
                 BEGIN
-                    groups_name := 'groups'
+                    groups_name := 'groups';
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json json);
                     FOR chat_id, is_active IN (SELECT chat_id, is_active FROM groups WHERE is_active IS TRUE)
                     LOOP
@@ -1462,10 +1462,18 @@ async def messageHandler(message: types.Message):
         
         
         session = DataBaseSession()
-        result = session.updateFunctions()
-        print("Update Functions Result: {}".format(result))
-        result = session.updateTables(chats_list, chats_tables_list)
-        print("Update Tables Result: {}".format(result))
+        
+        try:
+            result1 = session.updateFunctions()
+            print("Update Functions Result: {}".format(result1))
+            try:
+                result2 = session.updateTables(chats_list, chats_tables_list)
+                print("Update Tables Result: {}".format(result2))
+            except Exception as _exception:
+                print(_exception)
+        except Exception as _exception:
+            print(_exception)
+
         
     """
         chat_id = message.chat.id
