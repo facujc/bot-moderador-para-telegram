@@ -1327,7 +1327,6 @@ class DataBaseSession:
                                 commands_prefix = table_B.commands_prefix,
                                 karma_parameters = table_B.karma_parameters
                             FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B
-                            WHERE table_B.chat_id = table_A.chat_id;
                     END IF;
                     
                     FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
