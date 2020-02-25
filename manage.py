@@ -1315,8 +1315,9 @@ class DataBaseSession:
         self.update_tables_function = """
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 DECLARE
-                    groups_name := 'groups'
+                    groups_name CHAR;
                 BEGIN
+                    groups_name := 'groups'
                     SELECT to_regclass('schema_name.groups_name') AS table_A;
                     SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
                     IF table_A IS NULL THEN
@@ -1355,6 +1356,7 @@ class DataBaseSession:
                                 WHERE table_B.user_id = table_A.user_id;
                         END IF;
                     END LOOP;
+                    RETURN True;
                 END; $$
             LANGUAGE PLPGSQL;
         """
@@ -1362,8 +1364,9 @@ class DataBaseSession:
         self.get_tables_function = """
             CREATE OR REPLACE FUNCTION get_tables(OUT chats_list JSON, OUT chats_tables_list JSON) AS $$
                 DECLARE
-                    groups_name := 'groups'
+                    groups_name CHAR;
                 BEGIN
+                    groups_name := 'groups'
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json json);
                     FOR chat_id, is_active IN (SELECT chat_id, is_active FROM groups WHERE is_active IS TRUE)
                     LOOP
