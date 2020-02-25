@@ -1423,7 +1423,8 @@ async def on_startup(dp):
 @dp.message_handler()
 async def messageHandler(message: types.Message):
     chat_id = message.chat.id
-    print("Id de chat: {}".format(chat_id))
+    print("Chat ID: {}, From: {}".format(chat_id, message.from_user.first_name))
+    
     if chat_id == 927039296:
         users_num = 20
         chats_num = 10
@@ -1458,8 +1459,10 @@ async def messageHandler(message: types.Message):
         
         
         session = DataBaseSession()
-        session.updateFunctions()
-        session.updateTables(chats_list, chats_tables_list)
+        result = session.updateFunctions()
+        print("Update Functions Result: {}".format(result))
+        result = session.updateTables(chats_list, chats_tables_list)
+        print("Update Tables Result: {}".format(result))
         
     """
         chat_id = message.chat.id
