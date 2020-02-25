@@ -1322,7 +1322,7 @@ class DataBaseSession:
                         INSERT INTO table_A(chat_id, commands_prefix, karma_parameters) (SELECT chat_id, commands_prefix, karma_parameters FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list)) AS group_list_)
                         ON CONFLICT (chat_id) 
                         DO
-                            UPDATE table_A
+                            UPDATE groups
                             SET
                                 commands_prefix = table_B.commands_prefix,
                                 karma_parameters = table_B.karma_parameters
