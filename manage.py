@@ -1339,7 +1339,7 @@ class DataBaseSession:
                     
                     FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::myrowtype, chats_tables_list)
                     LOOP
-                        SELECT to_regclass(SELECT 'public.' || rec.chat_id) AS table_A;
+                        SELECT to_regclass('public.' || rec.chat_id) AS table_A;
                         IF table_A IS NULL THEN
                             CREATE TABLE (SELECT rec.chat_id)(user_id INT, level INT, karma TEXT [])
                             AS json_populate_recordset(null::myrowtype, rec.user_json);
