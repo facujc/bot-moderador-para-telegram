@@ -1361,17 +1361,19 @@ class DataBaseSession:
         
         self.get_tables_function = """
             CREATE OR REPLACE FUNCTION get_tables(OUT chats_list JSON, OUT chats_tables_list JSON) AS $$
+                DECLARE
+                    rec RECORD;
                 BEGIN
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json json);
-                    FOR chat_id, is_active IN (SELECT chat_id, is_active FROM groups WHERE is_active IS TRUE)
+                    FOR rec IN (SELECT * FROM groups WHERE is_active IS TRUE)
                     LOOP
-                        SELECT json_agg(chat_id) AS chat_json FROM chat_id;
+                        EXECUTE format('SELECT * FROM %I;', rec.chat_id);
                         INSERT INTO temp_chats_list(chat_id, chat_json)
-                            VALUES (chat_id, chat_json);
+                            VALUES (rec.chat_id, EXECUTE format('SELECT * FROM %I;', rec.chat_id););
                     END LOOP;
                     
-                    SELECT json_agg(groups) AS chats_list FROM groups;
-                    SELECT json_agg(temp_chats_list)  AS chats_tables_list FROM temp_groups;
+                    chats_list := SELECT json_agg(groups)
+                    chats_tables_list := SELECT json_agg(temp_chats_list)
                 END; $$
             LANGUAGE plpgsql;
         """
@@ -1379,7 +1381,7 @@ class DataBaseSession:
     def updateFunctions(self):
         self.execute(self.update_tables_function)
         self.execute(self.get_tables_function)
-            
+    
     def execute(self, sql):
         connection = None
         try:
@@ -1457,7 +1459,7 @@ async def messageHandler(message: types.Message):
         session = DataBaseSession()
         
         session.updateFunctions()
-        session.updateTables(chats_list, chats_tables_list)
+        #session.updateTables(chats_list, chats_tables_list)
         
     """
         chat_id = message.chat.id
