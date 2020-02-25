@@ -1325,7 +1325,7 @@ class DataBaseSession:
                             UPDATE
                             SET
                                 commands_prefix = table_B.commands_prefix,
-                                karma_parameters = table_B.karma_parameters
+                                karma_parameters = table_B.karma_parameters;
                     END IF;
                     
                     FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
