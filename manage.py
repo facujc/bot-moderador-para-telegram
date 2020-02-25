@@ -1328,7 +1328,7 @@ class DataBaseSession:
                     ELSE
                         INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
                             SELECT chat_id, commands_prefix, karma_parameters 
-                            FROM json_populate_recordset(null::myrowtype, chats_list) AS table_B
+                            FROM json_populate_recordset(null::myrowtype, chats_list) AS table_B;
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
@@ -1348,7 +1348,7 @@ class DataBaseSession:
                                 FROM json_populate_recordset(null::myrowtype, rec.user_json) AS table_B;
                             ON CONFLICT (user_id) 
                             DO
-                                UPDATE table_A
+                                UPDATE
                                 SET
                                     level = table_B.level,
                                     karma = table_B.karma;
