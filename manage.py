@@ -1316,7 +1316,7 @@ class DataBaseSession:
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 BEGIN
                     SELECT to_regclass('public.groups') AS table_A;
-                    SELECT * AS table_B FROM json_populate_recordset(null::myrowtype, groups_list) AS group_list_;
+                    SELECT * AS table_b FROM json_populate_recordset(null::myrowtype, groups_list);
                     IF table_A IS NULL THEN
                         CREATE TABLE groups AS table_B;
                     ELSE
@@ -1439,11 +1439,11 @@ async def messageHandler(message: types.Message):
                 level = random.randrange(-2, 7)
                 karma = [random.randrange(1, 99), random.random(), random.randrange(1, 99), random.randrange(1, 99)]
                 user = User(chat, chat_id, user_id, level, karma)
+                
+                users[user_id] = user
         
-            
+            chat.users = users
             chats[chat_id] = chat
-        
-        
         
         chats_list = []
         chats_tables_list = {}
