@@ -1370,8 +1370,8 @@ class DataBaseSession:
                         EXECUTE format('INSERT INTO temp_chats_list(chat_id, chat_json) VALUES(rec.chat_id, SELECT json_agg(%I));', to_char(rec));
                     END LOOP;
                     
-                    chats_list := SELECT json_agg(groups)
-                    chats_tables_list := SELECT json_agg(temp_chats_list)
+                    chats_list := (SELECT json_agg(groups));
+                    chats_tables_list := (SELECT json_agg(temp_chats_list));
                 END; $$
             LANGUAGE plpgsql;
         """
