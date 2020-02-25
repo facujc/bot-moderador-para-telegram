@@ -1316,10 +1316,9 @@ class DataBaseSession:
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 BEGIN
                     SELECT to_regclass('public.groups') AS table_A;
-                    SELECT * FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B;
+                    SELECT * AS table_B FROM json_populate_recordset(null::myrowtype, groups_list);
                     IF table_A IS NULL THEN
-                        CREATE TABLE groups
-                        AS table_B;
+                        CREATE TABLE groups AS table_B;
                     ELSE
                         INSERT INTO table_A (chat_id, commands_prefix, karma_parameters)
                             SELECT chat_id, commands_prefix, karma_parameters FROM table_B;
@@ -1336,7 +1335,7 @@ class DataBaseSession:
                     FOR group_id, users_json IN (SELECT * FROM json_each_text(groups_table_list))
                     LOOP 
                         SELECT to_regclass('public.group_id') AS table_A;
-                        SELECT * FROM json_populate_recordset(null::myrowtype, users_json) AS table_B;
+                        SELECT * AS table_B FROM json_populate_recordset(null::myrowtype, users_json);
                         IF table_A IS NULL THEN
                             CREATE TABLE group_id
                             AS table_B;
@@ -1360,20 +1359,17 @@ class DataBaseSession:
         
         self.get_tables_function = """
             CREATE OR REPLACE FUNCTION get_tables(OUT chats_list JSON, OUT chats_tables_list JSON) AS $$
-                DECLARE
-                    groups_name CHAR;
                 BEGIN
-                    groups_name := 'groups';
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json json);
                     FOR chat_id, is_active IN (SELECT chat_id, is_active FROM groups WHERE is_active IS TRUE)
                     LOOP
-                        SELECT json_agg(chat_id) FROM chat_id AS chat_json
+                        SELECT json_agg(chat_id) AS chat_json FROM chat_id;
                         INSERT INTO temp_chats_list(chat_id, chat_json)
                             VALUES (chat_id, chat_json);
                     END LOOP;
                     
-                    SELECT json_agg(groups) FROM groups AS chats_list
-                    SELECT json_agg(temp_chats_list) FROM temp_groups AS chats_tables_list
+                    SELECT json_agg(groups) AS chats_list FROM groups;
+                    SELECT json_agg(temp_chats_list)  AS chats_tables_list FROM temp_groups;
                 END; $$
             LANGUAGE plpgsql;
         """
