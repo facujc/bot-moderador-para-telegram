@@ -1310,6 +1310,10 @@ class Chat:
         
         return chat_data, chat_users
 
+
+#chats_list = [{chat_id, commands_prefix, karma_parameters}, {chat_id, commands_prefix, karma_parameters})
+#chats_tables_list = [{chat_id, user_json}, {chat_id, user_json}]
+
 class DataBaseSession:
     def __init__(self):
         self.update_tables_function = """
@@ -1320,11 +1324,11 @@ class DataBaseSession:
                     SELECT to_regclass('public.groups') AS table_A;
                     IF table_A IS NULL THEN
                         CREATE TABLE groups(chat_id INT, commands_prefix CHAR(1), karma_parameters TEXT [])
-                        AS json_populate_recordset(null::myrowtype, groups_list);
+                        AS json_populate_recordset(null::myrowtype, chats_list);
                     ELSE
                         INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
                             SELECT chat_id, commands_prefix, karma_parameters 
-                            FROM json_populate_recordset(null::myrowtype, groups_list) AS table_B
+                            FROM json_populate_recordset(null::myrowtype, chats_list) AS table_B
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
@@ -1333,16 +1337,16 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR rec IN SELECT key, value FROM json_each_text(groups_table_list)
+                    FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::myrowtype, chats_tables_list)
                     LOOP
-                        SELECT to_regclass(SELECT 'public.' || rec.key) AS table_A;
+                        SELECT to_regclass(SELECT 'public.' || rec.chat_id) AS table_A;
                         IF table_A IS NULL THEN
-                            CREATE TABLE (SELECT rec.group_id)(user_id INT, level INT, karma TEXT [])
-                            AS json_populate_recordset(null::myrowtype, rec.value);
+                            CREATE TABLE (SELECT rec.chat_id)(user_id INT, level INT, karma TEXT [])
+                            AS json_populate_recordset(null::myrowtype, rec.user_json);
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
-                                FROM json_populate_recordset(null::myrowtype, rec.value) AS table_B;
+                                FROM json_populate_recordset(null::myrowtype, rec.user_json) AS table_B;
                             ON CONFLICT (user_id) 
                             DO
                                 UPDATE table_A
