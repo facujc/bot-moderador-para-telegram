@@ -1319,8 +1319,7 @@ class DataBaseSession:
                     IF table_A IS NULL THEN
                         CREATE TABLE groups(chat_id INT, commands_prefix CHAR(1), karma_parameters TEXT []);
                     ELSE
-                        INSERT INTO table_A (chat_id, commands_prefix, karma_parameters)
-                            SELECT chat_id, commands_prefix, karma_parameters FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list));
+                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters) (SELECT chat_id, commands_prefix, karma_parameters FROM (SELECT * FROM json_populate_recordset(null::myrowtype, groups_list)))
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE table_A
