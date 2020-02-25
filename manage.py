@@ -1367,8 +1367,7 @@ class DataBaseSession:
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json JSON);
                     FOR rec IN (SELECT * FROM groups WHERE is_active IS TRUE)
                     LOOP
-                        INSERT INTO temp_chats_list(chat_id, chat_json)
-                            EXECUTE format('VALUES(rec.chat_id, SELECT json_agg(SELECT * FROM %I));', to_char(rec.chat_id));
+                        EXECUTE format('INSERT INTO temp_chats_list(chat_id, chat_json) VALUES(rec.chat_id, SELECT json_agg(SELECT * FROM %I));', to_char(rec.chat_id));
                     END LOOP;
                     
                     chats_list := SELECT json_agg(groups)
