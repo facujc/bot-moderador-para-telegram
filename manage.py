@@ -1400,8 +1400,6 @@ class DataBaseSession:
                 connection.close()
                 print('Database connection closed.')
             
-            return result
-        
     def updateTables(self, chats_list, chats_tables_list):
         result = self.execute("SELECT update_tables({}, {})".format(chats_list, chats_tables_list))
         return result        
