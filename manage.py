@@ -1316,7 +1316,7 @@ class DataBaseSession:
             CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 BEGIN
                     SELECT to_regclass('public.groups') AS table_A;
-                    SELECT * AS table_b FROM json_populate_recordset(null::myrowtype, groups_list);
+                    SELECT * FROM json_populate_recordset(null::myrowtype, groups_list);
                     IF table_A IS NULL THEN
                         CREATE TABLE groups AS table_B;
                     ELSE
