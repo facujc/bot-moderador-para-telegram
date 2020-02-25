@@ -1339,10 +1339,9 @@ class DataBaseSession:
                     
                     FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::myrowtype, chats_tables_list)
                     LOOP
-                        SELECT to_regclass('public.' || rec.chat_id) AS table_A;
+                        SELECT to_regclass('public.' || to_char(rec.chat_id)) AS table_A;
                         IF table_A IS NULL THEN
-                            CREATE TABLE (SELECT rec.chat_id)
-                            AS json_populate_recordset(null::myrowtype, rec.user_json);
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::myrowtype, rec.user_json));', to_char(rec.chat_id));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
