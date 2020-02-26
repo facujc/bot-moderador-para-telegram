@@ -1318,7 +1318,7 @@ class Chat:
 class DataBaseSession:
     def __init__(self):
         self.update_tables_function = """
-            CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
+            CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
                 DECLARE
                     rec RECORD;
                 BEGIN
@@ -1355,7 +1355,7 @@ class DataBaseSession:
                                     karma = table_B.karma;
                         END IF;
                     END LOOP;
-                    RETURN True;
+                    RETURN TRUE;
                 END; $$
             LANGUAGE plpgsql;
         """
@@ -1446,12 +1446,12 @@ async def messageHandler(message: types.Message):
             chat.users = users
             chats[chat_id] = chat
         
-        chats_list = []
+        chats_list = {}
         chats_tables_list = {}
         
         for chat_id, chat in chats.items():
             chat_data, chat_users = chat.dict()
-            chats_list.append(chat_data)
+            chats_list[chat_id] = chat_data
             chats_tables_list[chat_id] = chat_users
         
         
