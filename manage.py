@@ -1318,7 +1318,7 @@ class Chat:
 class DataBaseSession:
     def __init__(self):
         self.update_tables_function = """
-            CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
+            CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
                 DECLARE
                     rec RECORD;
                 BEGIN
@@ -1381,15 +1381,14 @@ class DataBaseSession:
         self.execute(self.update_tables_function)
         self.execute(self.get_tables_function)
     
-    def execute(self, proc, parameters):
+    def execute(self, sql):
         connection = None
         try:
             print('Connecting to the PostgreSQL database...')
             connection = psycopg2.connect(DATABASE_URL, sslmode='require')
             cursor = connection.cursor()
             
-            cursor.callproc()
-            
+            cursor.execute(sql)
             result = cursor.fetchall()
             print("Result: {}".format(result))
            
@@ -1398,15 +1397,41 @@ class DataBaseSession:
             print(error)
         finally:
             if connection is not None:
+                connection.commit()
                 connection.close()
                 print('Database connection closed.')
+    
+    def callFunction(self, proc, parameters):
+        connection = None
+        result = False
+        try:
+            print('Connecting to the PostgreSQL database...')
+            connection = psycopg2.connect(DATABASE_URL, sslmode='require')
+            cursor = connection.cursor()
             
+            result = cursor.callproc(proc, parameters)
+            print("Result: {}".format(result))
+           
+            cursor.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+        finally:
+            if connection is not None:
+                connection.commit()
+                connection.close()
+                print('Database connection closed.')
+                
+            return result
+
+    
+    
+    
     def updateTables(self, chats_list, chats_tables_list):
-        result = self.execute("update_tables", [chats_list, chats_tables_list])
+        result = self.callFunction("update_tables", [chats_list, chats_tables_list])
         return result        
         
     def getTables(self):
-        result = self.execute("SELECT get_tables()")
+        result = self.execute("get_tables")
         return result
 
 
