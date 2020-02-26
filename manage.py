@@ -1321,8 +1321,9 @@ class DataBaseSession:
             CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
                 DECLARE
                     rec RECORD;
+                    table_A RECORD;
                 BEGIN
-                    SELECT to_regclass('public.groups') AS table_A;
+                    table_A := (SELECT to_regclass('public.groups'));
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
                         AS (SELECT * FROM json_populate_recordset(null::myrowtype, chats_list));
@@ -1340,7 +1341,7 @@ class DataBaseSession:
                     
                     FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::myrowtype, chats_tables_list)
                     LOOP
-                        SELECT to_regclass('public.' || to_char(rec.chat_id)) AS table_A;
+                        table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
                             EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::myrowtype, rec.user_json));', to_char(rec.chat_id));
                         ELSE
