@@ -1381,14 +1381,14 @@ class DataBaseSession:
         self.execute(self.update_tables_function)
         self.execute(self.get_tables_function)
     
-    def execute(self, sql):
+    def execute(self, proc, parameters):
         connection = None
         try:
             print('Connecting to the PostgreSQL database...')
             connection = psycopg2.connect(DATABASE_URL, sslmode='require')
             cursor = connection.cursor()
             
-            cursor.execute(sql)
+            cursor.callproc()
             
             result = cursor.fetchall()
             print("Result: {}".format(result))
@@ -1402,7 +1402,7 @@ class DataBaseSession:
                 print('Database connection closed.')
             
     def updateTables(self, chats_list, chats_tables_list):
-        result = self.execute("SELECT update_tables('{}', '{}');".format(chats_list, chats_tables_list))
+        result = self.execute("update_tables", [chats_list, chats_tables_list])
         return result        
         
     def getTables(self):
@@ -1446,12 +1446,12 @@ async def messageHandler(message: types.Message):
             chat.users = users
             chats[chat_id] = chat
         
-        chats_list = {}
+        chats_list = []
         chats_tables_list = {}
         
         for chat_id, chat in chats.items():
             chat_data, chat_users = chat.dict()
-            chats_list[chat_id] = chat_data
+            chats_list.append(chat_data)
             chats_tables_list[chat_id] = chat_users
         
         
