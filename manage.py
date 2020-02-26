@@ -1318,7 +1318,7 @@ class Chat:
 class DataBaseSession:
     def __init__(self):
         self.update_tables_function = """
-            CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
+            CREATE OR REPLACE FUNCTION update_tables(chats_list json, chats_tables_list json) RETURNS bool AS $$
                 DECLARE
                     rec RECORD;
                 BEGIN
