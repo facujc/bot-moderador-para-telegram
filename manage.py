@@ -8,10 +8,11 @@ Created on 2 sep. 2019
 import os
 import time
 import random
+import json
+
 import asyncio
 import logging
 import psycopg2
-
 
 from math import log, log2
 from aiogram import Bot, types
@@ -1401,7 +1402,7 @@ class DataBaseSession:
                 print('Database connection closed.')
             
     def updateTables(self, chats_list, chats_tables_list):
-        result = self.execute("SELECT update_tables('{}', '{}')".format(chats_list, chats_tables_list))
+        result = self.execute("SELECT update_tables({}, {})".format(chats_list, chats_tables_list))
         return result        
         
     def getTables(self):
@@ -1457,7 +1458,7 @@ async def messageHandler(message: types.Message):
         session = DataBaseSession()
         
         session.updateFunctions()
-        session.updateTables(chats_list, chats_tables_list)
+        session.updateTables(json.dumps(chats_list), json.dumps(chats_tables_list))
         
     """
         chat_id = message.chat.id
