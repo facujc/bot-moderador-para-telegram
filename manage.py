@@ -1356,7 +1356,7 @@ class DataBaseSession:
                     END LOOP;
                     RETURN True;
                 END; $$
-            LANGUAGE PLPGSQL;
+            LANGUAGE plpgsql;
         """
         
         self.get_tables_function = """
@@ -1457,7 +1457,7 @@ async def messageHandler(message: types.Message):
         session = DataBaseSession()
         
         session.updateFunctions()
-        #session.updateTables(chats_list, chats_tables_list)
+        session.updateTables(chats_list, chats_tables_list)
         
     """
         chat_id = message.chat.id
