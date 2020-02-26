@@ -1326,11 +1326,11 @@ class DataBaseSession:
                     table_A := (SELECT to_regclass('public.groups'));
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
-                        AS (SELECT * FROM json_populate_recordset(null::myrowtype, chats_list));
+                        AS (SELECT * FROM json_populate_recordset(null::bool, chats_list));
                     ELSE
                         INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
                             SELECT chat_id, commands_prefix, karma_parameters 
-                            FROM json_populate_recordset(null::myrowtype, chats_list) AS table_B
+                            FROM json_populate_recordset(null::bool, chats_list) AS table_B
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
@@ -1339,15 +1339,15 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::myrowtype, chats_tables_list)
+                    FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::bool, chats_tables_list)
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
-                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::myrowtype, rec.user_json));', to_char(rec.chat_id));
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::bool, rec.user_json));', to_char(rec.chat_id));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
-                                FROM json_populate_recordset(null::myrowtype, rec.user_json) AS table_B
+                                FROM json_populate_recordset(null::bool, rec.user_json) AS table_B
                             ON CONFLICT (user_id) 
                             DO
                                 UPDATE
