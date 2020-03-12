@@ -1539,7 +1539,7 @@ async def messageHandler(message: types.Message):
         
         session = DataBaseSession()
         
-        #session.updateFunctions()
+        session.updateFunctions()
         session.updateTables(json.dumps(chats_list), json.dumps(chats_tables_list))
         
     """
