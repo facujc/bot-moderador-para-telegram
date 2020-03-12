@@ -1366,7 +1366,7 @@ class DataBaseSession:
                     CREATE TYPE chats_list_type AS (
                         chat_id INT,
                         commands_prefix VARCHAR,
-                        karma_parameters ARRAY
+                        karma_parameters TEXT
                     );
                     
                     CREATE TYPE chats_tables_list_type AS (
@@ -1377,7 +1377,7 @@ class DataBaseSession:
                     CREATE TYPE chats_tables_list_type AS (
                         user_id INT,
                         level INT,
-                        karma ARRAY
+                        karma TEXT
                     );
                                         
                     IF table_A IS NULL THEN
