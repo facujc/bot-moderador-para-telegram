@@ -1380,10 +1380,10 @@ class DataBaseSession:
                         karma TEXT
                     );
                     
-                    rec := chats_tables_list_type
+                    rec := chats_tables_list_type;
                     
                     table_A := (SELECT to_regclass('public.groups'));
-                                        
+                    
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
                         AS (SELECT * FROM json_populate_recordset(null::chats_list_type, chats_list));
