@@ -1272,7 +1272,7 @@ class User:
         dictionary = {
             "user_id": self.user_id, 
             "level": self.level,
-            "karma": self.karma
+            "karma": str(self.karma)
             }
         
         return dictionary
@@ -1300,7 +1300,7 @@ class Chat:
         chat_data = {
             "chat_id": self.chat_id, 
             "commands_prefix": self.commands_prefix,
-            "karma_parameters": self.karma_parameters,
+            "karma_parameters": str(self.karma_parameters)
             }
         
         chat_users = []
@@ -1321,7 +1321,8 @@ class DataBaseSession:
             CREATE TYPE chats_list_type AS (
                 chat_id INT,
                 commands_prefix VARCHAR,
-                karma_parameters ARRAY
+                karma_parameters ARRAY,
+                is_active BOOL
             );
             
             CREATE TYPE chats_tables_list_type AS (
@@ -1364,7 +1365,8 @@ class DataBaseSession:
                     CREATE TYPE chats_list_type AS (
                         chat_id INT,
                         commands_prefix VARCHAR,
-                        karma_parameters TEXT
+                        karma_parameters TEXT,
+                        is_active BOOL
                     );
                     
                     CREATE TYPE chats_tables_list_type AS (
@@ -1378,24 +1380,27 @@ class DataBaseSession:
                         karma TEXT
                     );
                     
+                    rec := chats_tables_list_type
+                    
                     table_A := (SELECT to_regclass('public.groups'));
                                         
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
                         AS (SELECT * FROM json_populate_recordset(null::chats_list_type, chats_list));
                     ELSE
-                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters)
-                            SELECT chat_id, commands_prefix, karma_parameters 
+                        INSERT INTO table_A(chat_id, commands_prefix, karma_parameters, is_active)
+                            SELECT chat_id, commands_prefix, karma_parameters, is_active
                             FROM json_populate_recordset(null::chats_list_type, chats_list) AS table_B
                         ON CONFLICT (chat_id) 
                         DO
                             UPDATE
                             SET
                                 commands_prefix = table_B.commands_prefix,
-                                karma_parameters = table_B.karma_parameters;
+                                karma_parameters = table_B.karma_parameters,
+                                is_active = table_B.is_active;
                     END IF;
                     
-                    FOR rec IN json_populate_recordset(null::chats_tables_list_type, chats_tables_list)
+                    FOR rec IN (SELECT * FROM json_populate_recordset(null::chats_tables_list_type, chats_tables_list))
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
