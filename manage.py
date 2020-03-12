@@ -1366,8 +1366,13 @@ class DataBaseSession:
                         commands_prefix VARCHAR,
                         karma_parameters TEXT
                     );
-                                        
+                    
                     CREATE TYPE chats_tables_list_type AS (
+                        chat_id INT,
+                        user_json JSON
+                    );
+                    
+                    CREATE TYPE chats_table_list_type AS (
                         user_id INT,
                         level INT,
                         karma TEXT
@@ -1390,15 +1395,15 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR rec IN SELECT chat_id, user_json FROM json_populate_recordset(null::chats_tables_list_type, chats_tables_list)
+                    FOR rec IN SELECT chat_id, users_json FROM json_populate_recordset(null::chats_tables_list_type, chats_tables_list)
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
-                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_tables_list_type, rec.user_json));', to_char(rec.chat_id));
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.users_json));', to_char(rec.chat_id));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
-                                FROM json_populate_recordset(null::chats_tables_list_type, rec.user_json) AS table_B
+                                FROM json_populate_recordset(null::chats_table_list_type, rec.users_json) AS table_B
                             ON CONFLICT (user_id) 
                             DO
                                 UPDATE
