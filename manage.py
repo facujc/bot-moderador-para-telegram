@@ -1321,19 +1321,19 @@ class DataBaseSession:
             CREATE TYPE chats_list_type AS (
                 chat_id INT,
                 commands_prefix VARCHAR,
-                karma_parameters ARRAY,
+                karma_parameters TEXT,
                 is_active BOOL
             );
             
             CREATE TYPE chats_tables_list_type AS (
                 chat_id INT,
-                user_json JSON
+                users_json JSON
             );
             
-            CREATE TYPE chats_tables_list_type AS (
+            CREATE TYPE chats_table_list_type AS (
                 user_id INT,
                 level INT,
-                karma ARRAY
+                karma TEXT
             );
         """
         
@@ -1359,29 +1359,9 @@ class DataBaseSession:
         self.update_tables_function = """
             CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
                 DECLARE
-                    rec RECORD;
+                    rec chats_tables_list_type;
                     table_A RECORD;
-                BEGIN                    
-                    CREATE TYPE chats_list_type AS (
-                        chat_id INT,
-                        commands_prefix VARCHAR,
-                        karma_parameters TEXT,
-                        is_active BOOL
-                    );
-                    
-                    CREATE TYPE chats_tables_list_type AS (
-                        chat_id INT,
-                        users_json JSON
-                    );
-                    
-                    CREATE TYPE chats_table_list_type AS (
-                        user_id INT,
-                        level INT,
-                        karma TEXT
-                    );
-                    
-                    rec := chats_tables_list_type;
-                    
+                BEGIN                                        
                     table_A := (SELECT to_regclass('public.groups'));
                     
                     IF table_A IS NULL THEN
@@ -1440,6 +1420,7 @@ class DataBaseSession:
         """
     
     def updateFunctions(self):
+        self.execute(self.create_types_function)
         self.execute(self.update_tables_function)
         self.execute(self.get_tables_function)
     
