@@ -1360,25 +1360,25 @@ class DataBaseSession:
                 DECLARE
                     rec RECORD;
                     table_A RECORD;
-                BEGIN
-                    table_A := (SELECT to_regclass('public.groups'));
-                    
-                    CREATE TYPE chats_list_type AS (
+                BEGIN                    
+                    ALTER TYPE chats_list_type AS (
                         chat_id INT,
                         commands_prefix VARCHAR,
                         karma_parameters TEXT
                     );
                     
-                    CREATE TYPE chats_tables_list_type AS (
+                    ALTER TYPE chats_tables_list_type AS (
                         chat_id INT,
                         user_json JSON
                     );
                     
-                    CREATE TYPE chats_tables_list_type AS (
+                    ALTER TYPE chats_tables_list_type AS (
                         user_id INT,
                         level INT,
                         karma TEXT
                     );
+                    
+                    table_A := (SELECT to_regclass('public.groups'));
                                         
                     IF table_A IS NULL THEN
                         CREATE TABLE groups
