@@ -1283,13 +1283,15 @@ class Chat:
             chat_id, 
             users={},
             commands_prefix="/",
-            karma_parameters=[1, 0, 1, 0]
+            karma_parameters=[1, 0, 1, 0],
+            is_active=True
             ):
         
         self.chat_id = chat_id
         
         self.commands_prefix = commands_prefix
         self.karma_parameters = karma_parameters
+        self.is_active = is_active
         
         self.users = {}
         if users:
@@ -1300,7 +1302,8 @@ class Chat:
         chat_data = {
             "chat_id": self.chat_id, 
             "commands_prefix": self.commands_prefix,
-            "karma_parameters": str(self.karma_parameters)
+            "karma_parameters": str(self.karma_parameters),
+            "is_active": self.is_active
             }
         
         chat_users = []
@@ -1327,7 +1330,7 @@ class DataBaseSession:
             
             CREATE TYPE chats_tables_list_type AS (
                 chat_id INT,
-                users_json JSON
+                chat_users JSON
             );
             
             CREATE TYPE chats_table_list_type AS (
@@ -1336,26 +1339,7 @@ class DataBaseSession:
                 karma TEXT
             );
         """
-        
-        self.alter_types_function =  """               
-            ALTER TYPE chats_list_type AS (
-                chat_id INT,
-                commands_prefix VARCHAR,
-                karma_parameters ARRAY
-            );
-            
-            ALTER TYPE chats_tables_list_type AS (
-                chat_id INT,
-                user_json JSON
-            );
-            
-            ALTER TYPE chats_tables_list_type AS (
-                user_id INT,
-                level INT,
-                karma ARRAY
-            );
-        """
-        
+                
         self.update_tables_function = """
             CREATE OR REPLACE FUNCTION update_tables(chats_list JSON, chats_tables_list JSON) RETURNS bool AS $$
                 DECLARE
@@ -1384,11 +1368,11 @@ class DataBaseSession:
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
-                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.users_json));', to_char(rec.chat_id));
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users));', to_char(rec.chat_id));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
-                                FROM json_populate_recordset(null::chats_table_list_type, rec.users_json) AS table_B
+                                FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users) AS table_B
                             ON CONFLICT (user_id) 
                             DO
                                 UPDATE
@@ -1515,18 +1499,43 @@ async def messageHandler(message: types.Message):
             chats[chat_id] = chat
         
         chats_list = []
-        chats_tables_list = {}
+        chats_tables_list = []
         
         for chat_id, chat in chats.items():
             chat_data, chat_users = chat.dict()
             chats_list.append(chat_data)
-            chats_tables_list[chat_id] = chat_users
-        
+            chats_tables_list.append({"chat_id": chat_id, "chat_users": chat_users})
         
         session = DataBaseSession()
         
         session.updateFunctions()
         session.updateTables(json.dumps(chats_list), json.dumps(chats_tables_list))
+        
+        
+    """
+        chats_tables_list
+        {123984: [{user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            ],
+        123984: [{user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            ],
+        123984: [{user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            {user_id: 123515, level: 1, karma = [1, 0, 1, 1]},
+                            ]
+        }
+        
+        chat_data
+        [{chat_id: 1234134, commands_prefix: "/", karma_parameters: [0,1,2,3]},
+         {chat_id: 1234134, commands_prefix: "/", karma_parameters: [0,1,2,3]},
+         {chat_id: 1234134, commands_prefix: "/", karma_parameters: [0,1,2,3]},
+         {chat_id: 1234134, commands_prefix: "/", karma_parameters: [0,1,2,3]},
+        ]
+    """
+
         
     """
         chat_id = message.chat.id
