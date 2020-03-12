@@ -1361,18 +1361,13 @@ class DataBaseSession:
                     rec RECORD;
                     table_A RECORD;
                 BEGIN                    
-                    ALTER TYPE chats_list_type AS (
+                    CREATE TYPE chats_list_type AS (
                         chat_id INT,
                         commands_prefix VARCHAR,
                         karma_parameters TEXT
                     );
-                    
-                    ALTER TYPE chats_tables_list_type AS (
-                        chat_id INT,
-                        user_json JSON
-                    );
-                    
-                    ALTER TYPE chats_tables_list_type AS (
+                                        
+                    CREATE TYPE chats_tables_list_type AS (
                         user_id INT,
                         level INT,
                         karma TEXT
