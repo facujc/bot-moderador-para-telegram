@@ -1369,7 +1369,7 @@ class DataBaseSession:
                     
                     CREATE TYPE chats_tables_list_type AS (
                         chat_id INT,
-                        user_json JSON
+                        users_json JSON
                     );
                     
                     CREATE TYPE chats_table_list_type AS (
