@@ -1368,7 +1368,7 @@ class DataBaseSession:
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
-                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users));', to_char(rec.chat_id));
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users));', TO_CHAR(rec.chat_id, '999999'));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
@@ -1394,7 +1394,7 @@ class DataBaseSession:
                     CREATE TEMP TABLE temp_chats_list(chat_id INT, chat_json JSON);
                     FOR rec IN (SELECT * FROM groups WHERE is_active IS TRUE)
                     LOOP
-                        EXECUTE format('INSERT INTO temp_chats_list(chat_id, chat_json) VALUES(rec.chat_id, SELECT json_agg(%I));', to_char(rec));
+                        EXECUTE format('INSERT INTO temp_chats_list(chat_id, chat_json) VALUES(rec.chat_id, SELECT json_agg(%I));', TO_CHAR(rec));
                     END LOOP;
                     
                     chats_list := (SELECT json_agg(groups));
