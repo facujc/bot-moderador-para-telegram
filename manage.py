@@ -1395,7 +1395,7 @@ class DataBaseSession:
                                 karma_parameters = table_B.karma_parameters;
                     END IF;
                     
-                    FOR rec IN (SELECT * FROM json_populate_recordset(null::chats_tables_list_type, chats_tables_list))
+                    FOR rec IN json_populate_recordset(null::chats_tables_list_type, chats_tables_list)
                     LOOP
                         table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
                         IF table_A IS NULL THEN
