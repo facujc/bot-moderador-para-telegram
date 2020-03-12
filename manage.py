@@ -1366,9 +1366,9 @@ class DataBaseSession:
                     
                     FOR rec IN (SELECT * FROM json_populate_recordset(null::chats_tables_list_type, chats_tables_list))
                     LOOP
-                        table_A := (SELECT to_regclass('public.' || to_char(rec.chat_id)));
+                        table_A := (SELECT to_regclass('public.' || TO_CHAR(rec.chat_id, '000000')));
                         IF table_A IS NULL THEN
-                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users));', TO_CHAR(rec.chat_id, '999999'));
+                            EXECUTE format('CREATE TABLE %I AS (SELECT * FROM json_populate_recordset(null::chats_table_list_type, rec.chat_users));', TO_CHAR(rec.chat_id, '000000'));
                         ELSE
                             INSERT INTO table_A (user_id, level, karma)
                                 SELECT user_id, level, karma 
